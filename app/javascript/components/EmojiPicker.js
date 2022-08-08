@@ -1,78 +1,53 @@
-import { useEffect } from 'react';
-import { createPopup } from '@picmo/popup-picker';
+import { useEffect } from "react";
+import { createPopup } from "@picmo/popup-picker";
+import { RichText } from "../classes/RichText";
 
 function EmojiPicker(props) {
   let emojiPicker;
   let trixEditor;
-  let triggerButton;
   let picker;
-  console.log(props)
+  console.log(props);
 
   useEffect(() => {
-    emojiPicker = document.querySelector('.pickerContainer');
-    trixEditor = document.querySelector("#post_content")
+    emojiPicker = document.querySelector(".pickerContainer");
+    trixEditor = document.querySelector("#post_content");
+    const buttonString = emojiButtonString();
+    const emojiButton = emojiButtonTemplate(buttonString);
 
-    if (emojiPicker === null || trixEditor === null) {
-        return;
-    }
-    let richText = new RichText(props.target, picker);
-    
-    picker = createPopup({ 
+    let richText = new RichText(picker, emojiButton);
+
+    picker = createPopup(
+      {
         rootElement: emojiPicker,
+      },
+      {
+        // The element that triggers the popup
+        triggerElement: emojiButton,
+
+        // The element to position the picker relative to - often this is also the trigger element,
+        referenceElement: emojiButton,
+
+        // specify how to position the popup
+        position: "bottom-start",
+      }
+    );
+    picker.addEventListener("emoji:select", (event) => {
+      trixEditor.editor.insertString(event.emoji);
     });
-    picker.addEventListener('emoji:select', event => {
-      trixEditor.editor.insertString(event.emoji)
-    });
-    
-    
-    triggerButton = document.querySelector('#emoji-button');
     richText.setPicker(picker);
-    richText.setTriggerButton(triggerButton);
   }, []);
-}
 
-class RichText {
-  constructor(element) {
-    console.log("Constructing")
-    this.element = element
-    this.createEmojiPickerButton()
-  }
-
-  createEmojiPickerButton() {
-    const buttonString = this.emojiButtonString();
-    const button = this.emojiButtonTemplate(buttonString);
-    button.addEventListener('click', this.toggleEmojiPicker.bind(this))
-    document.querySelector("[data-trix-button-group=block-tools]").prepend(button)
-    this.emojiButton = button;
-  }
-
-  toggleEmojiPicker() {
-    console.log("Clicked Emoji Toggle")
-    const emojiPicker = document.querySelector('.pickerContainer');
-    if (emojiPicker === null) {
-      return;
-    }
-    this.toggleVisibility();
-  }
-  emojiButtonTemplate(buttonString) {
+  function emojiButtonTemplate(buttonString) {
     const domParser = new DOMParser();
-    const emojiButton = domParser.parseFromString(buttonString, "text/html").querySelector("button");
+    const emojiButton = domParser
+      .parseFromString(buttonString, "text/html")
+      .querySelector("button");
     return emojiButton;
   }
-    emojiButtonString() {
-    const buttonString = `<button class="trix-button trix-button--icon" id="emoji-picker" data-trix-action="insert-emoji" tabindex="1" value="😀"></button>`;
-    return buttonString
-  }
-  toggleVisibility() {
-    this.picker.open();
-  }
-  setPicker(picker) {
-    this.picker = picker;
-  }
-  setTriggerButton(triggerButton) {
-    this.triggerButton = triggerButton;
+  function emojiButtonString() {
+    const buttonString = `<button class="trix-button" id="emoji-picker" data-trix-action="insert-emoji" tabindex="1">😀</button>`;
+    return buttonString;
   }
 }
 
-
-export default EmojiPicker
+export default EmojiPicker;
